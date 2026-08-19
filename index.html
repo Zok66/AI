@@ -361,6 +361,7 @@
             white-space: pre-wrap;
             max-width: 90%;
             width: fit-content;
+            flex: 0 0 auto;
             margin: 0;
             background: var(--secondary-color);
             padding: 1rem;
@@ -401,23 +402,18 @@
             height: 35px;
             width: 35px;
             border-radius: 50%;
-            display: flex;
+            display: none;
             align-items: center;
             justify-content: center;
             background: none;
             font-size: 1.25rem;
             margin-left: 0.5rem;
-            visibility: hidden;
-        }
-        .chat-list .message .icon {
-            aspect-ratio: 1 / 1;
-            border-radius: 50%;
         }
         .chat-list .message .icon.hide {
-            visibility: hidden;
+            display: none;
         }
         .chat-list .message:not(.loading, .error):hover .icon:not(.hide) {
-            visibility: visible;
+            display: flex;
         }
         .chat-list .message .icon:hover {
             background: var(--secondary-hover-color);
@@ -1027,7 +1023,7 @@
                 <div class="message-content">
                     ${isUser ? `
                         <img class="avatar" src="images/user.jpg" alt="User avatar">
-                        <p class="text">${content}</p>
+                        <div class="text">${content}</div>
                     ` : `
                         <img class="avatar" src="images/gemini.jpg" alt="Gemini avatar">
                         <div class="loading-indicator">
@@ -1035,7 +1031,7 @@
                             <div class="loading-bar"></div>
                             <div class="loading-bar"></div>
                         </div>
-                        <p class="text"></p>
+                        <div class="text"></div>
                     `}
                     <span onClick="copyMessage(this)" class="icon material-symbols-rounded">content_copy</span>
                 </div>
@@ -1082,7 +1078,7 @@
             if (quickResponses[trimmedMessage]) {
                 setTimeout(() => {
                     const reply = quickResponses[trimmedMessage];
-                    textElement.textContent = reply;
+                    textElement.textContent = reply.trim();
                     speakText(reply);
                     conversationHistory.push({ role: 'assistant', content: reply });
                     localStorage.setItem('conversationHistory', JSON.stringify(conversationHistory));
@@ -1145,7 +1141,7 @@
                 }
             }
 
-            textElement.textContent = finalReply;
+            textElement.textContent = finalReply.trim();
             speakText(finalReply);
             conversationHistory.push({ role: 'assistant', content: finalReply });
             localStorage.setItem('conversationHistory', JSON.stringify(conversationHistory));
@@ -1272,7 +1268,7 @@
                 chatContainer.appendChild(messageElement);
                 if (message.role === 'assistant') {
                     const textElement = messageElement.querySelector('.text');
-                    textElement.textContent = message.content;
+                    textElement.textContent = message.content.trim();
                     const loadingIndicator = messageElement.querySelector('.loading-indicator');
                     loadingIndicator.style.display = 'none';
                 }
