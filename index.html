@@ -358,7 +358,8 @@
         }
         .chat-list .message .text {
             color: var(--text-color);
-            white-space: pre-wrap;
+            white-space: pre-line;
+            line-height: 1.5;
             max-width: 90%;
             width: fit-content;
             flex: 0 0 auto;
@@ -368,7 +369,7 @@
             border-radius: 10px;
             overflow-wrap: break-word;
             word-wrap: break-word;
-            word-break: break-all;
+            word-break: break-word;
             transition: background var(--transition-speed) ease;
         }
         .chat-list .message.outgoing .text {
