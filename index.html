@@ -981,6 +981,18 @@
         let isProcessing = false;
         let isSpeechEnabled = true;
        const maxRetries = 3;
+       // 初始化 marked 配置（容错处理：CDN 加载失败则降级为纯文本）
+       if (typeof marked !== 'undefined') {
+            marked.setOptions({ breaks: true, gfm: true });
+       }
+       function renderMarkdown(text) {
+            if (typeof marked !== 'undefined') {
+                return marked.parse(text);
+            }
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+       }
        // Agnes AI API 配置（部署时由 Actions 注入密钥）
        const AGNES_API_KEY = '__AGNES_API_KEY__';
        const AGNES_BASE_URL = 'https://apihub.agnes-ai.com/v1';
@@ -1111,7 +1123,7 @@
             if (quickResponses[trimmedMessage]) {
                 setTimeout(() => {
                     const reply = quickResponses[trimmedMessage];
-                    textElement.innerHTML = marked.parse(reply.trim());
+                    textElement.innerHTML = renderMarkdown(reply.trim());
                     speakText(reply);
                     conversationHistory.push({ role: 'assistant', content: reply });
                     localStorage.setItem('conversationHistory', JSON.stringify(conversationHistory));
@@ -1174,7 +1186,7 @@
                 }
             }
 
-            textElement.innerHTML = marked.parse(finalReply.trim());
+            textElement.innerHTML = renderMarkdown(finalReply.trim());
             speakText(finalReply);
             conversationHistory.push({ role: 'assistant', content: finalReply });
             localStorage.setItem('conversationHistory', JSON.stringify(conversationHistory));
@@ -1301,7 +1313,7 @@
                 chatContainer.appendChild(messageElement);
                 if (message.role === 'assistant') {
                     const textElement = messageElement.querySelector('.text');
-                    textElement.innerHTML = marked.parse(message.content.trim());
+                    textElement.innerHTML = renderMarkdown(message.content.trim());
                     const loadingIndicator = messageElement.querySelector('.loading-indicator');
                     loadingIndicator.style.display = 'none';
                 }
