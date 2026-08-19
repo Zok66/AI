@@ -6,6 +6,7 @@
     <title>Zorrose-bot | ZJM</title>
     <link rel="icon" type="image/x-icon" href="favicon.ico">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0">
     <style>
@@ -382,6 +383,34 @@
             margin-right: auto;
             background: var(--secondary-color);
             max-width: 90%;
+        }
+        .chat-list .message.incoming .text p {
+            margin: 0 0 0.5rem 0;
+        }
+        .chat-list .message.incoming .text p:last-child {
+            margin-bottom: 0;
+        }
+        .chat-list .message.incoming .text pre {
+            background: rgba(0, 0, 0, 0.08);
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            overflow-x: auto;
+            white-space: pre;
+            margin: 0.5rem 0;
+            font-size: 0.85em;
+            line-height: 1.4;
+        }
+        .chat-list .message.incoming .text pre code {
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            word-break: normal;
+            white-space: pre;
+        }
+        .chat-list .message.incoming .text :not(pre) > code {
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            background: rgba(0, 0, 0, 0.08);
+            padding: 0.15rem 0.4rem;
+            border-radius: 4px;
+            font-size: 0.9em;
         }
         .chat-list .message.error .text {
             color: #e55865;
@@ -1024,7 +1053,7 @@
                 <div class="message-content">
                     ${isUser ? `
                         <img class="avatar" src="images/user.jpg" alt="User avatar">
-                        <div class="text">${content}</div>
+                        <div class="text"></div>
                     ` : `
                         <img class="avatar" src="images/gemini.jpg" alt="Gemini avatar">
                         <div class="loading-indicator">
@@ -1037,6 +1066,9 @@
                     <span onClick="copyMessage(this)" class="icon material-symbols-rounded">content_copy</span>
                 </div>
             `;
+            if (isUser) {
+                messageDiv.querySelector('.text').textContent = content;
+            }
             return messageDiv;
         }
 
@@ -1079,7 +1111,7 @@
             if (quickResponses[trimmedMessage]) {
                 setTimeout(() => {
                     const reply = quickResponses[trimmedMessage];
-                    textElement.textContent = reply.trim();
+                    textElement.innerHTML = marked.parse(reply.trim());
                     speakText(reply);
                     conversationHistory.push({ role: 'assistant', content: reply });
                     localStorage.setItem('conversationHistory', JSON.stringify(conversationHistory));
@@ -1142,7 +1174,7 @@
                 }
             }
 
-            textElement.textContent = finalReply.trim();
+            textElement.innerHTML = marked.parse(finalReply.trim());
             speakText(finalReply);
             conversationHistory.push({ role: 'assistant', content: finalReply });
             localStorage.setItem('conversationHistory', JSON.stringify(conversationHistory));
@@ -1269,7 +1301,7 @@
                 chatContainer.appendChild(messageElement);
                 if (message.role === 'assistant') {
                     const textElement = messageElement.querySelector('.text');
-                    textElement.textContent = message.content.trim();
+                    textElement.innerHTML = marked.parse(message.content.trim());
                     const loadingIndicator = messageElement.querySelector('.loading-indicator');
                     loadingIndicator.style.display = 'none';
                 }
