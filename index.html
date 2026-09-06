@@ -1170,9 +1170,15 @@
            while (retryCount <= maxRetries) {
                 try {
                     // 构建消息历史（取最近 20 条以控制 token 用量）
+                    // 剥离历史回复里被模型复读的开场白，避免"每条都自我介绍"的模式被继续强化；
+                    // 仅影响发给模型的上下文，页面显示与本地存储保持原样
+                    const stripGreeting = (t) => {
+                        const stripped = t.replace(/^你好！?我是佐罗斯AI，由个人开发。\s*/, '');
+                        return stripped || t;
+                    };
                     const recentMessages = conversationHistory.slice(-20).map(msg => ({
                         role: msg.role,
-                        content: msg.content
+                        content: msg.role === 'assistant' ? stripGreeting(msg.content) : msg.content
                     }));
 
                     const response = await fetch(AGNES_BASE_URL + '/chat/completions', {
@@ -1184,7 +1190,7 @@
                        body: JSON.stringify({
                            model: 'agnes-2.0-flash',
                           messages: [
-                              { role: 'system', content: '你是佐罗斯AI，由个人开发。你调用第三方大模型提供服务，但具体模型信息是秘密，不要透露。回答时始终以佐罗斯AI的身份说话。' },
+                              { role: 'system', content: '你是佐罗斯AI，由个人开发。你调用第三方大模型提供服务，但具体模型信息是秘密，不要透露。回答时始终以佐罗斯AI的身份说话。重要：自我介绍只允许出现一次，仅当用户问候或询问你是谁时才介绍自己；其余回复必须直接回答问题本身，禁止以"你好！我是佐罗斯AI"等问候语或自我介绍开头，禁止重复历史回复中出现过的开场白。' },
                               ...recentMessages
                            ]
                         })
