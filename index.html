@@ -1048,14 +1048,43 @@
             }, 2000);
         }
 
-        function speakText(text) {
-            if (isSpeechEnabled && 'speechSynthesis' in window) {
-                const utterance = new SpeechSynthesisUtterance();
-                utterance.text = text.replace(/[（ $].+?[）$ ]/g, '');
-                utterance.lang = 'zh-CN';
-                utterance.rate = 1;
-                speechSynthesis.speak(utterance);
+        // 语音播报：始终只播最新一条，新回复到来立即打断上一条
+        let speechToken = 0;
+
+        function stopSpeech() {
+            // token 自增，使尚未执行的延迟播报请求失效
+            speechToken++;
+            if ('speechSynthesis' in window) {
+                speechSynthesis.cancel();
             }
+        }
+
+        function speakText(text) {
+            if (!isSpeechEnabled || !('speechSynthesis' in window)) return;
+
+            const cleanText = text
+                .replace(/（[^）]*）/g, '')
+                .replace(/\$[^$]*\$/g, '')
+                .trim();
+            if (!cleanText) return;
+
+            // 清空正在播报与排队中的旧语音，本次请求成为最新一条
+            const token = ++speechToken;
+            speechSynthesis.cancel();
+            if (speechSynthesis.paused) {
+                speechSynthesis.resume();
+            }
+
+            const utterance = new SpeechSynthesisUtterance(cleanText);
+            utterance.lang = 'zh-CN';
+            utterance.rate = 1;
+
+            // Chrome 在 cancel() 后立刻 speak() 可能不发声，延后一拍；
+            // 若期间又收到更新的回复，则丢弃本次请求，只播最新的那条
+            setTimeout(() => {
+                if (token !== speechToken) return;
+                speechSynthesis.speak(utterance);
+            }, 60);
         }
 
         function createMessageElement(content, isUser) {
@@ -1098,6 +1127,8 @@
             }
 
             userInput.value = '';
+            // 提出新问题时立刻停掉上一条回复的语音，避免旧播报盖住新回复
+            stopSpeech();
             const outgoingMessage = createMessageElement(message, true);
             chatContainer.appendChild(outgoingMessage);
             chatContainer.scrollTo(0, chatContainer.scrollHeight);
@@ -1327,7 +1358,7 @@
             voiceSwitch.classList.toggle('active', isSpeechEnabled);
             voiceSwitch.textContent = isSpeechEnabled ? 'volume_up' : 'volume_off';
             if (!isSpeechEnabled) {
-                speechSynthesis.cancel();
+                stopSpeech();
             }
         }
 
